@@ -4,6 +4,7 @@ import pika
 import re
 # After we configured socks5
 from urllib.request import urlopen
+from urllib.parse import urlsplit, urlunsplit
 from bs4 import BeautifulSoup
 # from multiprocessing import Pool
 
@@ -69,6 +70,17 @@ pool.map(start_crawler)
 listUrl = []
 
 
+def save_file(text):
+    f = open('crawler.txt', 'a')
+    f.write(text)
+    f.close()
+
+
+def domain_url(url):
+    split_url = urlsplit(url)
+    return split_url.netloc
+
+
 def read_url(url, depth):
     if depth == 5:
         return url
@@ -77,21 +89,23 @@ def read_url(url, depth):
         soup = BeautifulSoup(page.read(), 'html.parser')
         links = soup.find_all('a')
         if links is None or len(links) == 0:
-            listUrl.append(url)
             return 1;
         else:
 
             for link in links:
-                if is_url(link['href']):
-                    if link['href'] not in listUrl:
-                        print('{} | {}'.format(url, soup.title.get_text()))
-                        listUrl.append(url)
-                        read_url(link['href'], depth+1)
+                url_base = link['href'] if is_url(link['href']) else url + '/' + link['href']
+
+                if is_url(url_base):
+                    if url_base not in listUrl:
+                        save_file('{};{}\n'.format(url_base, soup.title.get_text()))
+                        print('{};{}\n'.format(url_base, soup.title.get_text()))
+                        listUrl.append(url_base)
+                        read_url(url_base, depth+1)
 
 
 def start_crawler():
     # consume_message(i)
-    read_url('http://torlinkbgs6aabns.onion/', 0)
+    read_url('https://dogolachhhnaqa7n.onion', 0)
 
 
 if __name__ == '__main__':
